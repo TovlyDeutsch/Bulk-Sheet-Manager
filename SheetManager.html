@@ -1,0 +1,208 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+<style>
+.branding-below {
+  bottom: 56px;
+  top: 0;
+}
+#FormPreview {
+border: 2px solid #cccccc;
+padding: 10px;
+padding-right: 100px; 
+
+}
+.sectionHeader {
+border-bottom: 2px solid #cccccc;
+padding-bottom: 2px;
+font-weight:bold;
+
+}
+.sectionFooter {
+border-top: 2px solid #cccccc;
+padding-top: 2px;
+
+}
+
+.empty {
+-webkit-box-shadow: inset 0px 0px 5px 2px #dd4b39;
+-moz-box-shadow: inset 0px 0px 5px 2px #dd4b39;
+box-shadow: inset 0px 0px 5px 2px #dd4b39;
+border: 1px solid #dd4b39;
+
+}
+.errorText {
+color: #dd4b39;
+}
+
+.pageOneTextInputs {
+display: block;
+}
+
+</style>
+
+<div class="sidebar branding-below">
+  <div class="block">
+  <h1 class="sectionHeader">Sheets</h1>
+  </div>
+<div class="block checkList">
+</div>
+
+ <div id= "lastButtonBlock" class="block">
+    <button class="create deleteButton" id="delete">DELETE</button>
+    <button id="protect">Protect</button>
+    <button id="hide">Hide</button>
+    <div style="margin-top: 12px;">
+    <button id="unhide">Unhide</button>
+    <button id="unprotect">Unprotect</button>
+    </div>
+  </div>
+  
+</div>
+
+<div class="sidebar bottom">
+<img alt="Add-on logo" class="logo" width="27" height="27" src="https://googledrive.com/host/0B0G1UdyJGrY6XzdjQWF4a1JYY1k/translate-logo-small.png">
+  <span class="gray">
+   Attendance Sorter by Tovly Deutsch</span>
+</div>
+<script>
+function addLoader(action) {
+
+$('#lastButtonBlock').after('<span class="loader"><span class="loader-inner"><span class="innerText">' + action + '</span></span></span>');
+}
+ function onGetSheetsFailure(error) {
+ google.script.run.withSuccessHandler(google.script.host.close).gsSheetGetFail();
+ }
+ 
+function onGetSheetsSuccess(sheets) {
+  
+  for (var i = 0; i < sheets.length; i++) {
+
+    $('.checkList').append('<div><input type="checkbox" name="' + sheets[i] + '">' + sheets[i] + '</div>');
+    
+  }
+  
+}
+
+google.script.run.withSuccessHandler(onGetSheetsSuccess).withFailureHandler(onGetSheetsFailure).getSheets();
+
+function onActionSuccess() {
+$('.loader').remove();
+}
+
+function onActionFailure(error) {
+$('.loader').remove();
+var originalMessage = error.message;
+if (originalMessage.indexOf("null") == -1) {
+var errorMessage = originalMessage.substr(0, 1).toLowerCase() + originalMessage.substr(1);
+$('#lastButtonBlock').after('<p class="errorText" id="firstError">Not all the sheets you selected could be deleted because ' + errorMessage + '</p>');
+}
+}
+
+$( "button" ).click(function() {
+$('.errorText').remove();
+var selected = [];
+$('.checkList input:checked').each(function() {
+    selected.push($(this).attr('name'));
+});
+
+google.script.run.withSuccessHandler(onActionSuccess).withFailureHandler(onActionFailure).gsActOnSelected(selected, this.id);
+addLoader('Deleting Sheets');
+});
+
+//$( ".target" ).change(function() {
+
+</script>
+<style>
+.loader {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  position: relative;
+  border: 4px solid #d14836;
+  top: 50%;
+  animation: loader 2s infinite ease;
+    margin: 30px auto;
+  left: 90px;
+}
+
+.loader-inner {
+  vertical-align: top;
+  display: inline-block;
+  width: 100%;
+  background-color: #d14836;
+  animation: loader-inner 2s infinite ease-in;
+  text-align: center;
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  
+  25% {
+    transform: rotate(180deg);
+  }
+  
+  50% {
+    transform: rotate(180deg);
+  }
+  
+  75% {
+    transform: rotate(360deg);
+  }
+  
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-inner {
+  0% {
+    height: 0%;
+  }
+  
+  25% {
+    height: 0%;
+  }
+  
+  50% {
+    height: 100%;
+  }
+  
+  75% {
+    height: 100%;
+  }
+  
+  100% {
+    height: 0%;
+  }
+}
+.innerText {
+  
+  animation: innerText 2s infinite ease;
+    font-weight: 700;
+}
+
+@keyframes innerText {
+  0% {
+    transform: rotate(0deg);
+  }
+  
+  25% {
+    transform: rotate(180deg);
+  }
+  
+  50% {
+    transform: rotate(180deg);
+  }
+  
+  75% {
+    transform: rotate(360deg);
+  }
+  
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>
