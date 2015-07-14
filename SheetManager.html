@@ -39,22 +39,52 @@ color: #dd4b39;
 display: block;
 }
 
+.refreshButton {
+width: 25px;
+  min-width: 0;
+  height: 25px;
+  line-height: 0;
+  padding: 0;
+  display: inline;
+  margin: 0 20px;
+}
+
+.sheetsTitle {
+  display: inline-block;
+  width: 200px;
+
+}
+
+.checkWrapper {
+padding: 5px;
+cursor: default;
+}
+
+.selected {
+background-color: #4285f4;
+color: #fff;
+
+}
+
 </style>
 
 <div class="sidebar branding-below">
   <div class="block">
-  <h1 class="sectionHeader">Sheets</h1>
+  <button style="display: block;" id="groupSelector" onclick="groupSelector()">Select All</button>
+  <h1 class="sectionHeader sheetsTitle">Sheets</h1><button onclick="refresh()" class="refreshButton">
+  <svg enable-background="new 0 0 32 32" height="16px" id="Layer_1" version="1.1" viewBox="0 0 32 32" width="16px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M25.032,26.16c2.884-2.883,4.184-6.74,3.928-10.51c-1.511,0.013-3.021,0.021-4.531,0.034  c0.254,2.599-0.603,5.287-2.594,7.277c-3.535,3.533-9.263,3.533-12.796,0c-3.534-3.533-3.534-9.26,0-12.794  c3.015-3.016,7.625-3.446,11.109-1.314c-1.181,1.167-2.57,2.549-2.57,2.549c-1,1.062,0.016,1.766,0.69,1.77h8.828  c0.338,0,0.611-0.274,0.612-0.612V3.804c0.041-0.825-0.865-1.591-1.756-0.7c0,0-1.495,1.48-2.533,2.509  C18.112,1.736,10.634,2.175,5.841,6.967c-5.3,5.3-5.3,13.892,0,19.193C11.141,31.459,19.733,31.459,25.032,26.16z" fill="#515151" id="Refresh"/></svg>
+  </button> 
   </div>
 <div class="block checkList">
 </div>
 
  <div id= "lastButtonBlock" class="block">
-    <button class="create deleteButton" id="delete">DELETE</button>
-    <button id="protect">Protect</button>
-    <button id="hide">Hide</button>
+    <button class="create deleteButton actionButton" id="delete">DELETE</button>
+    <button class ="actionButton" id="protect">Protect</button>
+    <button class ="actionButton" id="hide">Hide</button>
     <div style="margin-top: 12px;">
-    <button id="unhide">Unhide</button>
-    <button id="unprotect">Unprotect</button>
+    <button class ="actionButton" id="unhide">Unhide</button>
+    <button class ="actionButton" id="unprotect">Unprotect</button>
     </div>
   </div>
   
@@ -66,21 +96,101 @@ display: block;
    Attendance Sorter by Tovly Deutsch</span>
 </div>
 <script>
-function addLoader(action) {
+var selectType = true;
+var shift = false;
+var thisNum;
+var lastNum;
+var lowerNum;
+var higherNum;
+$( document ).keydown(function() {
+  if (event.which == 16) {
+  shift = true;
+  console.log(shift);
+  }
+  
+});
 
-$('#lastButtonBlock').after('<span class="loader"><span class="loader-inner"><span class="innerText">' + action + '</span></span></span>');
+$( document ).keyup(function() {
+  if (event.which == 16) {
+  shift = false;
+  console.log(shift);
+  }
+  
+});
+
+function groupSelector() {
+
+  $( "input:checkbox" ).each(function(){
+    $(this).prop('checked', selectType);
+  });
+  $( "input:checked" ).parent().addClass('selected');
+  $("input:checkbox:not(:checked)").parent().removeClass('selected');
+  selectType = !selectType;
+  if (selectType == false) {
+    document.getElementById('groupSelector').innerHTML = 'Deselect All';
+  }
+  else {
+    document.getElementById('groupSelector').innerHTML = 'Select All';
+  }
+}
+
+function addLoader(action, additionalParams) {
+
+$('#lastButtonBlock').after('<span class="loader"><span class="loader-inner"><span class="innerText"' + '>' + action + '</span></span></span>');
 }
  function onGetSheetsFailure(error) {
+ $('.loader').remove();
  google.script.run.withSuccessHandler(google.script.host.close).gsSheetGetFail();
  }
  
 function onGetSheetsSuccess(sheets) {
-  
+  $('.loader').remove();
+  $( ".checkWrapper" ).remove();
   for (var i = 0; i < sheets.length; i++) {
 
-    $('.checkList').append('<div><input type="checkbox" name="' + sheets[i] + '">' + sheets[i] + '</div>');
+    $('.checkList').append('<div id="' + i + '" class="checkWrapper"><input type="checkbox" name="' + sheets[i] + '">' + sheets[i] + '</div>');
     
   }
+  $( "input:checkbox" ).click(function( event ) {
+    event.stopPropagation();
+    if (shift == true) {
+      thisNum = +$(this).parent().prop('id');
+      lastNum = +$('.lastClicked').prop('id');
+      lowerNum = Math.min(thisNum, lastNum) + 1;
+      higherNum = Math.max(thisNum, lastNum);
+      console.log(thisNum, lastNum, lowerNum, higherNum);
+        for (var i = lowerNum; i < higherNum; i++) {
+          var checkBox = $('#' + i.toString()).find(">:first-child");
+          checkBox.prop('checked', !checkBox.prop('checked'));
+        }    
+    }
+    $( "input:checked" ).parent().addClass('selected');
+    $("input:checkbox:not(:checked)").parent().removeClass('selected');
+    $(".lastClicked").removeClass('lastClicked');
+    $(this).parent().addClass('lastClicked');
+    
+  });
+  $( ".checkWrapper" ).click(function() {
+  if (shift == true) {
+  console.log('it ran');
+      thisNum = +$(this).prop('id');
+      lastNum = +$('.lastClicked').prop('id');
+      lowerNum = Math.min(thisNum, lastNum) + 1;
+      higherNum = Math.max(thisNum, lastNum);
+      console.log(thisNum, lastNum, lowerNum, higherNum);
+        for (var i = lowerNum; i < higherNum; i++) {
+          var checkBox = $('#' + i.toString()).find(">:first-child");
+          checkBox.prop('checked', !checkBox.prop('checked'));
+        }    
+    }
+  var checkBox = $(this).find(">:first-child");
+  checkBox.prop('checked', !checkBox.prop('checked'));
+    $( "input:checked" ).parent().addClass('selected');
+    $("input:checkbox:not(:checked)").parent().removeClass('selected');
+    $(".lastClicked").removeClass('lastClicked');
+    $(this).addClass('lastClicked');
+    
+  });
   
 }
 
@@ -88,27 +198,32 @@ google.script.run.withSuccessHandler(onGetSheetsSuccess).withFailureHandler(onGe
 
 function onActionSuccess() {
 $('.loader').remove();
+google.script.run.withSuccessHandler(onGetSheetsSuccess).withFailureHandler(onGetSheetsFailure).getSheets();
 }
 
 function onActionFailure(error) {
 $('.loader').remove();
-var originalMessage = error.message;
-if (originalMessage.indexOf("null") == -1) {
-var errorMessage = originalMessage.substr(0, 1).toLowerCase() + originalMessage.substr(1);
-$('#lastButtonBlock').after('<p class="errorText" id="firstError">Not all the sheets you selected could be deleted because ' + errorMessage + '</p>');
-}
+$('#lastButtonBlock').after('<p class="errorText" id="firstError">' + error.message + '</p>');
+google.script.run.withSuccessHandler(onGetSheetsSuccess).withFailureHandler(onGetSheetsFailure).getSheets();
 }
 
-$( "button" ).click(function() {
+$( ".actionButton" ).click(function() {
 $('.errorText').remove();
 var selected = [];
 $('.checkList input:checked').each(function() {
     selected.push($(this).attr('name'));
 });
 
+
+
 google.script.run.withSuccessHandler(onActionSuccess).withFailureHandler(onActionFailure).gsActOnSelected(selected, this.id);
 addLoader('Deleting Sheets');
 });
+
+function refresh() {
+addLoader('Refreshing', 'style="font-size: 11px;"');
+google.script.run.withSuccessHandler(onGetSheetsSuccess).withFailureHandler(onGetSheetsFailure).getSheets();
+}
 
 //$( ".target" ).change(function() {
 
