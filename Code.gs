@@ -1,16 +1,11 @@
 function onInstall(){
-  
-  onOpen();
-   
+  onOpen();   
 }
 
 function onOpen(){
-var spreadsheet = SpreadsheetApp.getActive();
-  
+
     SpreadsheetApp.getUi().createAddonMenu()
-    .addItem('Start', 'openSidebar')
-    .addSeparator()
-      .addItem('Help', 'openHelp')
+    .addItem('Manage Sheets', 'openSidebar')
     .addToUi();
     
 }
@@ -27,48 +22,71 @@ function openSidebar() {
 }
 
 
-function openHelp() {
-
-}
-
 function getSheets() {
+  var protection;
   var spreadsheet = SpreadsheetApp.getActive();
   var sheets = spreadsheet.getSheets();
   for (var i = 0; i < sheets.length; i++) {
-    sheets[i] = sheets[i].getName();
-    
+     protection = sheets[i].getProtections(SpreadsheetApp.ProtectionType.SHEET).length >= 1 ? true : false; 
+    sheets[i] = {name: sheets[i].getName(), hidden: sheets[i].isSheetHidden(), protected: protection};    
   }
   return sheets;
-  
 }
 
 function gsActOnSelected(sheetNames, action) {
   var spreadsheet = SpreadsheetApp.getActive();
+  
   switch(action) {
-    case 'delete':
-        for (var i = 0; i < sheetNames.length; i++) {
-          spreadsheet.deleteSheet(spreadsheet.getSheetByName(sheetNames[i]));
-        }
+    case 'Deleting':
+      var confirmationMessage = sheetNames.length == 1 ? 'Are you sure you want to delete this sheet?' : 'Are you sure you want to delete these sheets?'; 
+      var returningAction = {word:'deleted', completed:true};
+        var sheet;
+          for (var i = 0; i < sheetNames.length; i++) {
+            sheet = spreadsheet.getSheetByName(sheetNames[i]);
+            if (sheet != null) {
+              spreadsheet.deleteSheet(sheet);
+            }
+          }
+        return returningAction;
         break;
-    case 'protect':
+    case 'Protecting':
+      var returningAction = {word:'protected', completed:true}
         for (var i = 0; i < sheetNames.length; i++) {
           spreadsheet.getSheetByName(sheetNames[i]).protect();
         }
+      return returningAction;
         break;
-    case 'hide':
+    case 'Hiding':
+      var sheet;
+      var returningAction = {word:'hidden', completed:true}
       for (var i = 0; i < sheetNames.length; i++) {
-          spreadsheet.getSheetByName(sheetNames[i]).hideSheet();
+          sheet = spreadsheet.getSheetByName(sheetNames[i]);
+          if (sheet.isSheetHidden() == true) {
+            action.completed = false; 
+          }
+          else {
+            sheet.hideSheet();
+          }
         }
+      return returningAction;
       break;
-    case 'unhide':
+    case 'Unhiding':
+      var returningAction = {word:'unhidden', completed:true}
       for (var i = 0; i < sheetNames.length; i++) {
           spreadsheet.getSheetByName(sheetNames[i]).showSheet();
         }
+      return returningAction;
       break;
-    case 'unprotect':
-       for (var i = 0; i < sheetNames.length; i++) {
-          spreadsheet.getSheetByName(sheetNames[i]).getProtections(SpreadsheetApp.ProtectionType.SHEET)[0].remove();
+    case 'Unprotecting':
+      var protection;
+      var returningAction = {word:'unprotected', completed:true}
+      for (var i = 0; i < sheetNames.length; i++) {
+        protection = spreadsheet.getSheetByName(sheetNames[i]).getProtections(SpreadsheetApp.ProtectionType.SHEET)[0];
+        if (protection != undefined) {
+          protection.remove();
         }
+      }
+      return returningAction;
       break;
   }
   
