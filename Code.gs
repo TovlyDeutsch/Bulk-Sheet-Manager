@@ -12,13 +12,18 @@ function onOpen(){
 
 function openSidebar() {
   
-  var html = HtmlService.createHtmlOutputFromFile('SheetManager')
+  var html = HtmlService.createTemplateFromFile('SheetManager')
+      .evaluate()
   .setTitle('Bulk Sheet Manager')
       .setWidth(300)
   .setSandboxMode(HtmlService.SandboxMode.IFRAME);
   SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
       .showSidebar(html);
  
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 
@@ -37,8 +42,10 @@ function gsActOnSelected(sheetNames, action) {
   var spreadsheet = SpreadsheetApp.getActive();
   
   switch(action) {
+      //if statements in each case check if all sheets are applicable to the action
     case 'Deleting':
       var confirmationMessage = sheetNames.length == 1 ? 'Are you sure you want to delete this sheet?' : 'Are you sure you want to delete these sheets?'; 
+      //when I implement confirmation message deleting functionality will be moved to a diff function and this work will become "fakeDelete"
       var returningAction = {word:'deleted', completed:true};
         var sheet;
           for (var i = 0; i < sheetNames.length; i++) {
@@ -46,13 +53,19 @@ function gsActOnSelected(sheetNames, action) {
             if (sheet != null) {
               spreadsheet.deleteSheet(sheet);
             }
+            else {returningAction.completed = false;}
           }
         return returningAction;
         break;
     case 'Protecting':
+      var sheet;
       var returningAction = {word:'protected', completed:true}
         for (var i = 0; i < sheetNames.length; i++) {
-          spreadsheet.getSheetByName(sheetNames[i]).protect();
+          sheet = spreadsheet.getSheetByName(sheetNames[i])
+          if (sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0] == undefined) {
+          sheet.protect();
+          }
+          else {returningAction.completed = false;}
         }
       return returningAction;
         break;
@@ -62,7 +75,7 @@ function gsActOnSelected(sheetNames, action) {
       for (var i = 0; i < sheetNames.length; i++) {
           sheet = spreadsheet.getSheetByName(sheetNames[i]);
           if (sheet.isSheetHidden() == true) {
-            action.completed = false; 
+            returningAction.completed = false; 
           }
           else {
             sheet.hideSheet();
@@ -73,8 +86,12 @@ function gsActOnSelected(sheetNames, action) {
     case 'Unhiding':
       var returningAction = {word:'unhidden', completed:true}
       for (var i = 0; i < sheetNames.length; i++) {
-          spreadsheet.getSheetByName(sheetNames[i]).showSheet();
+        sheet = spreadsheet.getSheetByName(sheetNames[i]);
+        if (sheet.isSheetHidden() == true) {
+          sheet.showSheet();
         }
+        else {returningAction.completed = false;}
+      }
       return returningAction;
       break;
     case 'Unprotecting':
@@ -85,6 +102,7 @@ function gsActOnSelected(sheetNames, action) {
         if (protection != undefined) {
           protection.remove();
         }
+        else {returningAction.completed = false;}
       }
       return returningAction;
       break;
@@ -100,7 +118,4 @@ function gsSheetGetFail() {
       'Your sheets could not be retrieved. Please close this dialog and try again. If this issue persists, please report the issue via Add-ons > Bulk Sheet Manager > Help',
       ui.ButtonSet.OK)
 }
-function debug () {
-  
-  SpreadsheetApp.getActiveSpreadsheet().toast('Task started'); 
-}
+
