@@ -43,32 +43,43 @@ function gsActOnSelected(sheetNames, action) {
   
   switch(action) {
       //if statements in each case check if all sheets are applicable to the action
+      
     case 'Deleting':
       var confirmationMessage = sheetNames.length == 1 ? 'Are you sure you want to delete this sheet?' : 'Are you sure you want to delete these sheets?'; 
       //when I implement confirmation message deleting functionality will be moved to a diff function and this work will become "fakeDelete"
       var returningAction = {word:'deleted', completed:true};
-        var sheet;
-          for (var i = 0; i < sheetNames.length; i++) {
-            sheet = spreadsheet.getSheetByName(sheetNames[i]);
-            if (sheet != null) {
-              spreadsheet.deleteSheet(sheet);
-            }
-            else {returningAction.completed = false;}
-          }
+      var sheet;
+      for (var i = 0; i < sheetNames.length; i++) {
+        sheet = spreadsheet.getSheetByName(sheetNames[i]);
+        if (sheet != null) {
+          spreadsheet.deleteSheet(sheet);
+        }
+        else {returningAction.completed = false;}
+      }
         return returningAction;
         break;
+      
     case 'Protecting':
       var sheet;
       var returningAction = {word:'protected', completed:true}
-        for (var i = 0; i < sheetNames.length; i++) {
-          sheet = spreadsheet.getSheetByName(sheetNames[i])
-          if (sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0] == undefined) {
-          sheet.protect();
+      for (var i = 0; i < sheetNames.length; i++) {
+        sheet = spreadsheet.getSheetByName(sheetNames[i])
+        if (sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0] == undefined) {
+          // Taken from Google Developers Reference at https://developers.google.com/apps-script/reference/spreadsheet/sheet#protect . Changed 'me' variable to "currentUser"
+          var protection = sheet.protect(); 
+          var currentUser = Session.getEffectiveUser();
+          protection.addEditor(currentUser);
+          protection.removeEditors(protection.getEditors());
+          if (protection.canDomainEdit()) {
+            protection.setDomainEdit(false);
           }
-          else {returningAction.completed = false;}
+          // End Google code sample
         }
+        else {returningAction.completed = false;}
+      }
       return returningAction;
-        break;
+      break;
+      
     case 'Hiding':
       var sheet;
       var returningAction = {word:'hidden', completed:true}
@@ -83,6 +94,7 @@ function gsActOnSelected(sheetNames, action) {
         }
       return returningAction;
       break;
+      
     case 'Unhiding':
       var returningAction = {word:'unhidden', completed:true}
       for (var i = 0; i < sheetNames.length; i++) {
@@ -94,6 +106,7 @@ function gsActOnSelected(sheetNames, action) {
       }
       return returningAction;
       break;
+      
     case 'Unprotecting':
       var protection;
       var returningAction = {word:'unprotected', completed:true}
@@ -106,9 +119,10 @@ function gsActOnSelected(sheetNames, action) {
       }
       return returningAction;
       break;
-  }
+      
+  } // end switch statement
   
-}
+} // end function gsActOnSelected
 
 function gsSheetGetFail() {
   var formName = FormApp.openByUrl(SpreadsheetApp.getActiveSpreadsheet().getFormUrl()).getTitle();
@@ -118,4 +132,3 @@ function gsSheetGetFail() {
       'Your sheets could not be retrieved. Please close this dialog and try again. If this issue persists, please report the issue via Add-ons > Bulk Sheet Manager > Help',
       ui.ButtonSet.OK)
 }
-

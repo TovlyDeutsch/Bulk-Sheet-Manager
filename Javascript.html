@@ -11,6 +11,7 @@ var containsProtected = false;
 var containsHidden = false;
 var containsUnprotected = false;
 var containsUnHidden = false;
+var scrollListAtEnd = false;
 $( document ).keydown(function(event) {
   if (event.which == 16) {
     shift = true;
@@ -31,16 +32,30 @@ $('#checkList').scroll(function() {
     else {
         $(".topMenu").removeClass("active");
     }
-    /*
-    var checkList = document.getElementById('checkList');
-    if (checkList.scrollHeight - checkList.scrollTop === checkList.clientHeight) {
-    }
-    */
+    
+   var buttonGroupTop = document.getElementById('lastButtonBlock').getBoundingClientRect().top;
+//   console.log('buttonGroupTop' + buttonGroupTop);
+//   console.log('last check' + $( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom);
+   if ($( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom <= buttonGroupTop) {
+     $('#lastButtonBlock').removeClass('coveringButtonGroup');
+     checkboxBeyondButtons = false;
+     if ((buttonGroupTop - $( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom) < 2) {
+       scrollListAtEnd = true;
+     }
+   }
+   else {
+     $('#lastButtonBlock').addClass('coveringButtonGroup');
+     checkboxBeyondButtons = true;
+   }
+  
 });
 
 function recalcCheckListHeight() {
+
   var buttonGroupTop = document.getElementById('lastButtonBlock').getBoundingClientRect().top;
-  if ($( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom > buttonGroupTop) {
+//  console.log('last checkbox' + $( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom);
+//  console.log('buttongrouptop' + buttonGroupTop);
+  if (($( ".sheetCheckWrapper:last" )[0].getBoundingClientRect().bottom + 1.5) >= buttonGroupTop) {
     $('#lastButtonBlock').addClass('coveringButtonGroup');
     checkboxBeyondButtons = true;
     $('.checkList').css('height', buttonGroupTop - document.getElementById('fixedTopMenu').getBoundingClientRect().bottom);
@@ -97,8 +112,10 @@ function configureButtons () {
  
 $( ".SelectAllCheckWrapper" ).click(function() {
   configureButtons();
-  $('.errorText').remove();
-  recalcCheckListHeight();
+  if ($('.errorText').length) {
+    $('.errorText').remove();
+    recalcCheckListHeight();
+  }
   var checkBox = $(this).find(">:first-child");
   checkBox.prop('checked', !checkBox.prop('checked'));
   $( ".sheetCheckbox:checked" ).parent().addClass('selected');
@@ -108,8 +125,10 @@ $( ".SelectAllCheckWrapper" ).click(function() {
 $( ".SelectAllCheckbox" ).click(function( event ) {
   event.stopPropagation();
   configureButtons();
-  $('.errorText').remove();
-  recalcCheckListHeight();
+  if ($('.errorText').length) {
+    $('.errorText').remove();
+    recalcCheckListHeight();
+  }
   $( ".sheetCheckbox:checked" ).parent().addClass('selected');
   $(".sheetCheckbox:not(:checked)").parent().removeClass('selected');   
 });
@@ -148,8 +167,10 @@ function onGetSheetsSuccess(sheets) {
   
   $( ".sheetCheckbox" ).click(function( event ) {
     event.stopPropagation();
-    $('.errorText').remove();
-    recalcCheckListHeight();
+    if ($('.errorText').length) {
+      $('.errorText').remove();
+      recalcCheckListHeight();
+    }
     if (shift == true) {
       thisNum = +$(this).parent().prop('id');
       lastNum = +$('.lastClicked').prop('id');
@@ -165,8 +186,10 @@ function onGetSheetsSuccess(sheets) {
   });
   
   $( ".sheetCheckWrapper" ).click(function() {
-    $('.errorText').remove();
-    recalcCheckListHeight()
+    if ($('.errorText').length) {
+      $('.errorText').remove();
+      recalcCheckListHeight();
+    }
     if (shift == true) {
       thisNum = +$(this).prop('id');
       lastNum = +$('.lastClicked').prop('id');
@@ -203,7 +226,7 @@ $( window ).resize(function() {
 });
 
 function insertErrorText (error) {
-  if (checkboxBeyondButtons == false) {
+  if (checkboxBeyondButtons == false && scrollListAtEnd === false) {
     $('.checkList').append('<p class="errorText" id="selectError">' + error + '</p>');
   }
   else {
@@ -251,6 +274,8 @@ function deleteSheet (selected) {
   $( "#cancelButton" ).click(function() {
     $('.ghostCover').remove();
     $('.confirmationMessage').remove();
+    $('button').attr("disabled", false);
+    configureButtons();
   });
   
   $('#okDelete').focus();  
@@ -258,8 +283,10 @@ function deleteSheet (selected) {
 
 $( ".actionButton" ).click(function() {
   $('button').attr("disabled", true);
-  $('.errorText').remove();
-  recalcCheckListHeight();
+  if ($('.errorText').length) {
+    $('.errorText').remove();
+    recalcCheckListHeight();
+  }
   var selected = [];
   $('.checkList input:checked').each(function() {
     selected.push($(this).attr('name'));
