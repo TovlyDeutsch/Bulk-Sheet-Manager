@@ -1,4 +1,4 @@
-# Attendance Sorter
+# Bulk Sheet Manager
 
 ### Background and Description
 Bulk Sheet Manager is a Google Sheets add-on to help people perform bulk actions on Google Sheets.
