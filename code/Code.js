@@ -1,13 +1,11 @@
-function onInstall(){
-  onOpen();   
+function onInstall(e){
+  onOpen(e);   
 }
 
-function onOpen(){
-
+function onOpen(e){
     SpreadsheetApp.getUi().createAddonMenu()
     .addItem('Manage Sheets', 'openSidebar')
     .addToUi();
-    
 }
 
 function openSidebar() {
@@ -60,14 +58,17 @@ function gsActOnSelected(sheetNames, action) {
         break;
       
     case 'Protecting':
+      ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, [
+        'https://www.googleapis.com/auth/userinfo.email',
+      ]);
       var sheet;
       var returningAction = {word:'protected', completed:true}
       for (var i = 0; i < sheetNames.length; i++) {
         sheet = spreadsheet.getSheetByName(sheetNames[i])
         if (sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET)[0] == undefined) {
           // Taken from Google Developers Reference at https://developers.google.com/apps-script/reference/spreadsheet/sheet#protect . Changed 'me' variable to "currentUser"
-          var protection = sheet.protect(); 
           var currentUser = Session.getEffectiveUser();
+          var protection = sheet.protect(); 
           protection.addEditor(currentUser);
           protection.removeEditors(protection.getEditors());
           if (protection.canDomainEdit()) {
